@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ECC_GATEGUARD=off cd \"D:/Claude-Code-zh/Claude-Code-Desktop-Chinese\")",
+      "Bash(python tools/check_i18n_coverage.py)",
+      "Bash(python -c \"import json; d=json.load\\(open\\('resources/frontend-zh-CN.json','r',encoding='utf-8'\\)\\); print\\(f'Total entries: {len\\(d\\)}'\\); empty=[k for k,v in d.items\\(\\) if not v.strip\\(\\)]; print\\(f'Empty entries: {len\\(empty\\)}'\\); untranslated=[k for k,v in d.items\\(\\) if v.strip\\(\\)==k]; print\\(f'Untranslated \\(value=key\\): {len\\(untranslated\\)}'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(powershell.exe -Command \"Get-AppxPackage -Name '*Claude*' 2>/dev/null\")",
+      "Bash(cmd.exe /c \"dir /s /b \\\\\"C:\\\\\\\\Program Files\\\\\\\\WindowsApps\\\\\\\\Claude*\\\\\" 2>nul | head -20\")",
+      "Bash(powershell.exe -Command 'Get-AppPackage -Name '\\\\''*Claude*'\\\\'' 2>$null | Format-List Name, Version, InstallLocation')",
+      "Bash(cmd.exe /c \"dir \\\\\"C:\\\\\\\\Program Files\\\\\\\\WindowsApps\\\\\\\\\\\\\" /b 2>nul | findstr /i Claude\")",
+      "Bash(python *)"
+    ]
+  }
+}

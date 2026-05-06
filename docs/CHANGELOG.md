@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-05-06
+
+### Added
+
+- 翻译扩充：从 Claude Desktop v1.5354.0.0 的 en-US 源文件中翻译了 1,198 个缺失的前端条目。
+- 新增翻译涵盖：连接器管理、Cowork 功能、HIPAA 合规、团队管理、计费、代码会话、AI 提示模板等模块。
+- `check_i18n_coverage.py` 新增 en-US 对比功能：自动检测缺失键和过时键。
+- `check_i18n_coverage.py` 增强未翻译检测：ASCII 阈值从 4 字符降至 3 字符，新增更多品牌名白名单。
+- `validate_resources.py` 新增：空值检查、占位符一致性校验（智能区分变量名和复数形式内容）、中文引号检测。
+
+### Fixed
+
+- 修复 `frontend-zh-CN.json` 中中文引号（U+201C/U+201D）被误用作 JSON 分隔符的语法错误。
+- 修复 `desktop-zh-CN.json` 中同样的中文引号 JSON 语法错误。
+- 翻译质量润色：统一"回忆"→"记忆"、修复生硬翻译（"嘿那里"→"你好"等）、修复格式问题。
+
+### Coverage
+
+- desktop-zh-CN.json: 361/361 keys (100%)
+- frontend-zh-CN.json: 13525/13227 keys (100%+, 含 298 个过时键)
+- statsig-zh-CN.json: 46/46 keys (100%)
+
 ## 2026-04-26
 
 ### Changed
