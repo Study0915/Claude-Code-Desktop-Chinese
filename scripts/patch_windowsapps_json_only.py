@@ -24,6 +24,30 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 RESOURCES = ROOT / "resources"
+
+
+def resolve_language_resources(lang: str = "zh-CN") -> list[tuple[Path, Path]]:
+    """Resolve resource file paths for a given language.
+
+    Returns list of (source, destination) pairs.
+    Supports both new (resources/{lang}/) and legacy (resources/) layouts.
+    """
+    lang_dir = RESOURCES / lang
+    if lang_dir.exists() and (lang_dir / "desktop.json").exists():
+        # New layout
+        return [
+            (lang_dir / "desktop.json", None),  # dst filled in main()
+            (lang_dir / "frontend.json", None),
+            (lang_dir / "statsig.json", None),
+        ]
+    # Legacy layout (zh-CN only)
+    return [
+        (RESOURCES / "desktop-zh-CN.json", None),
+        (RESOURCES / "frontend-zh-CN.json", None),
+        (RESOURCES / "statsig-zh-CN.json", None),
+    ]
+
+
 BACKUP_ROOT = Path(os.environ["LOCALAPPDATA"]) / "Claude-zh-CN-official-backup" / "json-only"
 CONFIG_PATH = Path(os.environ["APPDATA"]) / "Claude-3p" / "config.json"
 
@@ -180,6 +204,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Patch Claude Desktop with zh-CN resources")
     parser.add_argument("--app-dir", type=str, default=None,
                         help="Path to Claude app directory (auto-detected if omitted)")
+    parser.add_argument("--lang", type=str, default="zh-CN",
+                        help="Language code (default: zh-CN)")
     args = parser.parse_args()
 
     if args.app_dir:
@@ -194,11 +220,20 @@ def main() -> int:
     if not app_resources.exists():
         raise SystemExit(f"App resources not found: {app_resources}")
 
-    files = [
-        (RESOURCES / "desktop-zh-CN.json", app_resources / "zh-CN.json"),
-        (RESOURCES / "frontend-zh-CN.json", app_resources / "ion-dist" / "i18n" / "zh-CN.json"),
-        (RESOURCES / "statsig-zh-CN.json", app_resources / "ion-dist" / "i18n" / "statsig" / "zh-CN.json"),
-    ]
+    lang = args.lang
+    resources = resolve_language_resources(lang)
+    files = []
+    for src, _ in resources:
+        # Determine destination based on language and filename
+        if "desktop" in src.name:
+            dst = app_resources / f"{lang}.json"
+        elif "frontend" in src.name:
+            dst = app_resources / "ion-dist" / "i18n" / f"{lang}.json"
+        elif "statsig" in src.name:
+            dst = app_resources / "ion-dist" / "i18n" / "statsig" / f"{lang}.json"
+        else:
+            continue
+        files.append((src, dst))
 
     BACKUP_ROOT.mkdir(parents=True, exist_ok=True)
 

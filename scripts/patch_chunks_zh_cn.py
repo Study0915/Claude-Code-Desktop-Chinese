@@ -91,6 +91,21 @@ def font_inject_script() -> str:
     return (preset && preset.family) || cfg.family || DEFAULT;
   }};
 
+  function applyTheme() {
+    const themeId = localStorage.getItem("claude-zh-cn-theme");
+    if (!themeId) return;
+    const THEMES = JSON.parse(localStorage.getItem("claude-zh-cn-themes") || "[]");
+    const theme = THEMES.find(t => t.id === themeId);
+    if (!theme) return;
+    let themeStyle = document.getElementById("claude-zh-cn-theme-style");
+    if (!themeStyle) {
+      themeStyle = document.createElement("style");
+      themeStyle.id = "claude-zh-cn-theme-style";
+      document.head.appendChild(themeStyle);
+    }
+    themeStyle.textContent = theme.css;
+  }
+
   function applyFont(cfg = readConfig()) {{
     let style = document.getElementById(STYLE_ID);
     if (!style) {{
@@ -118,6 +133,7 @@ svg text, svg tspan {{
 `;
     document.documentElement.style.setProperty("--claude-zh-cn-font-family", family);
     window.dispatchEvent(new CustomEvent("claude-zh-cn-font-changed", {{ detail: cfg }}));
+    applyTheme();
   }}
 
   const labelStyle = "display:block;margin:8px 0 4px;font-size:12px;color:var(--text-300,#666);";
@@ -227,6 +243,14 @@ svg text, svg tspan {{
       </div>
 
       <div style="${{previewStyle}}">
+        <div style="margin:0 0 8px;padding:8px;border:1px solid var(--border-200,#e6e6e6);border-radius:8px;background:var(--bg-050,#fafafa);">
+          <div style="font-size:11px;font-weight:600;color:var(--text-400,#444);margin-bottom:6px;">主题</div>
+          <select data-theme-select style="width:100%;padding:4px 6px;border:1px solid var(--border-300,#ddd);border-radius:6px;background:var(--bg-000,#fff);">
+            <option value="">跟随系统</option>
+            <option value="warm-dark">暖色深色</option>
+            <option value="cool-light">清爽浅色</option>
+          </select>
+        </div>
         <div style="margin:0 0 8px;font-size:11px;font-weight:600;color:var(--text-400,#444);">预览</div>
         <div style="font-size:16px;line-height:1.45;font-weight:600;color:var(--text-500,#111);">中文字体预览</div>
         <div style="margin-top:8px;${{mutedText}}">Claude Desktop 中文补丁</div>
@@ -303,6 +327,17 @@ svg text, svg tspan {{
       applyFont();
       sync();
     }});
+    const themeSelect = panel.querySelector("[data-theme-select]");
+    if (themeSelect) {
+      themeSelect.addEventListener("change", () => {
+        localStorage.setItem("claude-zh-cn-theme", themeSelect.value || "");
+        applyTheme();
+      });
+      // Restore current selection
+      const saved = localStorage.getItem("claude-zh-cn-theme") || "";
+      themeSelect.value = saved;
+      if (saved) applyTheme();
+    }
     sync();
     updateLayout();
     return panel;

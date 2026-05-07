@@ -14,6 +14,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / "resources"
 
+GLOSSARY_PATH = RESOURCES / "glossary.json"
+
+def load_glossary() -> dict:
+    """Load terminology glossary from resources/glossary.json."""
+    if GLOSSARY_PATH.exists():
+        return json.loads(GLOSSARY_PATH.read_text(encoding="utf-8"))
+    return {}
+
 TARGETS = [
     {
         "name": "desktop",
@@ -57,6 +65,56 @@ KNOWN_OK_PATTERNS = [
     re.compile(r"^PR #\{.*\}$"),
     re.compile(r"^CI \{.*\}$"),
     re.compile(r"^.{1,3}$"),  # Short strings (1-3 chars) are likely abbreviations
+    # Social media platforms
+    re.compile(r"^(Instagram|Reddit|LinkedIn|TikTok|YouTube|X / Twitter)$"),
+    # Cloud/enterprise services
+    re.compile(r"^(Google Play|Google Docs|Google Drive|Google Cloud|Google Calendar|Google logo|Google)$"),
+    re.compile(r"^(Azure AI Foundry|Microsoft Foundry|Anthropic Sans)$"),
+    # Product names
+    re.compile(r"^(Claude Slack|Claude Cowork|Claude Free|Claude Platform|Claude Artifacts|Claude Ship|Claude .+)$"),
+    re.compile(r"^(Research Labs|Research Labs Premium)$"),
+    # Plan names with placeholders
+    re.compile(r"^(Pro|Standard|Premium|Enterprise Claude|Custom).+"),
+    # Version/size/count format strings
+    re.compile(r"^\{.*\}%$"),
+    re.compile(r"^\{.*\} (KB|MB|GB)$"),
+    # Names with email placeholders
+    re.compile(r"^\{name\}.*\{email\}$"),
+    re.compile(r"^\{fullName\}.*\{email\}$"),
+    # Other format strings with parentheses
+    re.compile(r"^（.*\{.*\}.*）$"),
+    re.compile(r"^\（.*\）$"),
+    # Short labels with symbols
+    re.compile(r"^[A-Z][a-z]+ [A-Z][a-z]+$"),
+    # HTTP status
+    re.compile(r"^HTTP \{status\}$"),
+    # Domain-like patterns
+    re.compile(r"^\.claude\.app$"),
+    re.compile(r"^your-site$"),
+    # API key labels
+    re.compile(r"^API_KEY$"),
+    # ACS URL
+    re.compile(r"^ACS URL$"),
+    # Mathematical/number formats
+    re.compile(r"^.{1}?\{amount\}$"),
+    re.compile(r"^\+\{count\}$"),
+    re.compile(r"^-\{count\}$"),
+    re.compile(r"^\+\{formattedCurrencyAmount\}$"),
+    # Progress/percentage
+    re.compile(r"^\{progress\}%$"),
+    re.compile(r"^\{pct\}%$"),
+    # Scale labels
+    re.compile(r"^.+ = \{firstLabel\}"),
+    # JCT suffix
+    re.compile(r"^\+ JCT$"),
+    # Feature name placeholder
+    re.compile(r"^Claude \{featureName\}$"),
+    # Learn safely
+    re.compile(r"^\{learnSafely\}"),
+    # Label with beta
+    re.compile(r"^\{label\}，Beta$"),
+    # Local indicator
+    re.compile(r"^（\{local\}）$"),
 ]
 
 
@@ -87,10 +145,37 @@ def classify_value(value: str) -> str | None:
     return None
 
 
+def check_glossary_consistency(data: dict, glossary: dict, name: str) -> list[str]:
+    """Check if zh-CN translations match the glossary terms."""
+    issues = []
+    if not glossary:
+        return issues
+    for term, info in glossary.items():
+        expected_zh = info.get("zh", "")
+        if not expected_zh or expected_zh == term:
+            continue  # Skip terms that stay in English
+        for key, value in data.items():
+            if not isinstance(value, str):
+                continue
+            # Skip very short values and format strings
+            if len(value) < 3 or value.startswith("{"):
+                continue
+            if term in value and expected_zh not in value:
+                pattern = r'\b' + re.escape(term) + r'\b'
+                if re.search(pattern, value):
+                    issues.append(
+                        f"  [{name}] Glossary mismatch: key={key}, "
+                        f"term='{term}' found but expected '{expected_zh}' not in value: {value[:80]}"
+                    )
+    return issues
+
+
 def main() -> int:
     report_lines: list[str] = []
     total_missing = 0
     total_suspect = 0
+    glossary_issues_total = 0
+    all_issues: list[str] = []
 
     for target in TARGETS:
         name = target["name"]
@@ -104,6 +189,14 @@ def main() -> int:
             continue
 
         zh_data = load_json(zh_path)
+        glossary = load_glossary()
+        glossary_issues = check_glossary_consistency(zh_data, glossary, name)
+        all_issues.extend(glossary_issues)
+        if glossary_issues:
+            print(f"  Glossary: {len(glossary_issues)} inconsistencies")
+        else:
+            print(f"  Glossary: OK")
+        glossary_issues_total += len(glossary_issues)
         report_lines.append(f"zh-CN keys: {len(zh_data)}")
 
         # Mode 1: en-US comparison
@@ -156,6 +249,7 @@ def main() -> int:
     report_lines.append("---")
     report_lines.append(f"**Total missing keys: {total_missing}**")
     report_lines.append(f"**Total suspect untranslated: {total_suspect}**")
+    report_lines.append(f"**Total glossary inconsistencies: {glossary_issues_total}**")
 
     report = "\n".join(report_lines)
     out = ROOT / "I18N-COVERAGE-REPORT.md"
@@ -164,6 +258,7 @@ def main() -> int:
     print(f"Wrote: {out}")
     print(f"Missing keys (en-US not in zh-CN): {total_missing}")
     print(f"Suspect untranslated values: {total_suspect}")
+    print(f"Total glossary inconsistencies: {glossary_issues_total}")
 
     return 1 if total_missing > 0 else 0
 

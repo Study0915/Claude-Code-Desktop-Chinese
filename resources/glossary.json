@@ -1,0 +1,162 @@
+{
+  "Cowork": {
+    "zh": "协作",
+    "note": "Claude 的协作模式，不译为'共同工作'或'协同'",
+    "tags": ["product", "sidebar"]
+  },
+  "Plugin": {
+    "zh": "插件",
+    "note": "用户可安装的功能扩展包",
+    "tags": ["product"]
+  },
+  "Skill": {
+    "zh": "技能",
+    "note": "Cowork 中的可执行技能包",
+    "tags": ["product"]
+  },
+  "MCP": {
+    "zh": "MCP",
+    "note": "Model Context Protocol，保留原文",
+    "tags": ["tech", "brand"]
+  },
+  "Artifacts": {
+    "zh": "Artifacts",
+    "note": "产品功能名，保留英文",
+    "tags": ["product", "brand"]
+  },
+  "Connector": {
+    "zh": "连接器",
+    "note": "第三方服务集成连接",
+    "tags": ["product"]
+  },
+  "Extension": {
+    "zh": "扩展",
+    "note": "桌面扩展程序",
+    "tags": ["product"]
+  },
+  "Workspace": {
+    "zh": "工作区",
+    "note": "Cowork 的工作目录",
+    "tags": ["product"]
+  },
+  "Session": {
+    "zh": "会话",
+    "note": "代码/Cowork 会话",
+    "tags": ["product"]
+  },
+  "Agent": {
+    "zh": "Agent",
+    "note": "AI 代理，保留英文",
+    "tags": ["product"]
+  },
+  "Token": {
+    "zh": "Token",
+    "note": "计量单位，保留英文",
+    "tags": ["tech"]
+  },
+  "Prompt": {
+    "zh": "提示词",
+    "note": "用户输入的指令",
+    "tags": ["tech"]
+  },
+  "Sandbox": {
+    "zh": "沙箱",
+    "note": "安全隔离环境",
+    "tags": ["tech"]
+  },
+  "VM": {
+    "zh": "虚拟机",
+    "note": "Virtual Machine",
+    "tags": ["tech"]
+  },
+  "Webhook": {
+    "zh": "Webhook",
+    "note": "保留英文",
+    "tags": ["tech"]
+  },
+  "Pull Request": {
+    "zh": "拉取请求",
+    "note": "Git 工作流术语",
+    "tags": ["tech"]
+  },
+  "Cherry-pick": {
+    "zh": "Cherry-pick",
+    "note": "Git 操作，保留英文",
+    "tags": ["tech"]
+  },
+  "Scheduled task": {
+    "zh": "计划任务",
+    "note": "定时执行的任务",
+    "tags": ["product"]
+  },
+  "Dispatch": {
+    "zh": "调度",
+    "note": "任务调度功能",
+    "tags": ["product"]
+  },
+  "Replay": {
+    "zh": "回放",
+    "note": "会话回放功能",
+    "tags": ["product"]
+  },
+  "Operon": {
+    "zh": "实验室",
+    "note": "实验性功能标签",
+    "tags": ["product"]
+  },
+  "HIPAA": {
+    "zh": "HIPAA",
+    "note": "医疗合规标准，保留英文",
+    "tags": ["compliance"]
+  },
+  "BAA": {
+    "zh": "BAA",
+    "note": "商业关联协议，保留英文",
+    "tags": ["compliance"]
+  },
+  "GitHub": {
+    "zh": "GitHub",
+    "note": "平台名，保留英文",
+    "tags": ["brand"]
+  },
+  "Claude": {
+    "zh": "Claude",
+    "note": "产品名，保留英文",
+    "tags": ["product", "brand"]
+  },
+  "Claude Code": {
+    "zh": "Claude Code",
+    "note": "产品名，保留英文",
+    "tags": ["product", "brand"]
+  },
+  "Claude Desktop": {
+    "zh": "Claude Desktop",
+    "note": "产品名，保留英文",
+    "tags": ["product", "brand"]
+  },
+  "Claude Max": {
+    "zh": "Claude Max",
+    "note": "订阅计划名，保留英文",
+    "tags": ["product", "brand"]
+  },
+  "Claude Pro": {
+    "zh": "Claude Pro",
+    "note": "订阅计划名，保留英文",
+    "tags": ["product", "brand"]
+  },
+  "Organization": {
+    "zh": "组织",
+    "note": "团队/企业组织",
+    "tags": ["product"]
+  },
+  "API": {
+    "zh": "API",
+    "note": "应用程序接口，保留英文缩写",
+    "tags": ["tech"]
+  },
+  "SSO": {
+    "zh": "SSO",
+    "note": "单点登录，保留英文缩写",
+    "tags": ["tech"]
+  }
+}

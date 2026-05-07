@@ -1,5 +1,13 @@
 # Changelog
 
+## Version Scheme
+
+Format: `{claude_version}.{patch_iteration}`
+- `claude_version`: The Claude Desktop version this patch targets (e.g., `1.5354.0`)
+- `patch_iteration`: Incremental number for translation updates, bug fixes, etc. within the same Claude version (e.g., `.1`, `.2`)
+
+Example: `1.5354.0.1` = first patch release for Claude Desktop v1.5354.0
+
 ## 2026-05-06
 
 ### Added

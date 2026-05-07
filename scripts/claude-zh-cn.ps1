@@ -354,6 +354,7 @@ function Show-Menu {
   }
   Write-Host '  [3] 手动指定 Claude app 目录' -ForegroundColor White
   Write-Host '  [4] 刷新状态' -ForegroundColor White
+  Write-Host '  [5] 启动系统托盘监视器' -ForegroundColor White
   Write-Host '  [0] 退出' -ForegroundColor White
   Write-Host ''
 }
@@ -391,6 +392,19 @@ while ($true) {
     '4' {
       # 刷新状态，直接回到菜单
     }
+    '5' {
+      Write-Host ''
+      Write-Info '正在启动系统托盘监视器...'
+      $trayScript = Join-Path $scriptDir '..\tray\app.py'
+      if (Test-Path $trayScript) {
+        Start-Process -FilePath $python.Source -ArgumentList "`"$trayScript`"" -WindowStyle Hidden
+        Write-OK '托盘监视器已在后台启动。'
+      } else {
+        Write-Err '托盘脚本未找到。'
+      }
+      Write-Host ''
+      Read-Host '按 Enter 返回菜单'
+    }
     '0' {
       Write-Host ''
       Write-Info '再见！'
@@ -399,7 +413,7 @@ while ($true) {
     }
     default {
       Write-Host ''
-      Write-Warn '无效选择，请输入 0-4。'
+      Write-Warn '无效选择，请输入 0-5。'
       Start-Sleep -Milliseconds 800
     }
   }

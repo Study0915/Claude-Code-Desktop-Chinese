@@ -1,0 +1,6 @@
+{
+  "id": "cool-light",
+  "name": "清爽浅色",
+  "description": "偏蓝调的浅色主题",
+  "css": ":root { --bg-000: #f8fafc; --bg-050: #f1f5f9; --bg-100: #e8eef4; --border-200: #d0dbe8; --border-300: #b8c8d8; --text-300: #64748b; --text-400: #475569; --text-500: #1e293b; }"
+}
