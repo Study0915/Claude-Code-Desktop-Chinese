@@ -1,0 +1,24 @@
+name: PR Check
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'resources/**'
+      - 'scripts/**'
+      - 'tools/**'
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate JSON resources
+        run: python tools/validate_resources.py
+      - name: Check i18n coverage
+        run: python tools/check_i18n_coverage.py
+        continue-on-error: true
+      - name: Run tests
+        run: python tools/test_patch_behaviors.py

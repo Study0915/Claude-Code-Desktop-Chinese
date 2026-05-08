@@ -91,20 +91,20 @@ def font_inject_script() -> str:
     return (preset && preset.family) || cfg.family || DEFAULT;
   }};
 
-  function applyTheme() {
+  function applyTheme() {{
     const themeId = localStorage.getItem("claude-zh-cn-theme");
     if (!themeId) return;
     const THEMES = JSON.parse(localStorage.getItem("claude-zh-cn-themes") || "[]");
     const theme = THEMES.find(t => t.id === themeId);
     if (!theme) return;
     let themeStyle = document.getElementById("claude-zh-cn-theme-style");
-    if (!themeStyle) {
+    if (!themeStyle) {{
       themeStyle = document.createElement("style");
       themeStyle.id = "claude-zh-cn-theme-style";
       document.head.appendChild(themeStyle);
-    }
+    }}
     themeStyle.textContent = theme.css;
-  }
+  }}
 
   function applyFont(cfg = readConfig()) {{
     let style = document.getElementById(STYLE_ID);
@@ -328,16 +328,16 @@ svg text, svg tspan {{
       sync();
     }});
     const themeSelect = panel.querySelector("[data-theme-select]");
-    if (themeSelect) {
-      themeSelect.addEventListener("change", () => {
+    if (themeSelect) {{
+      themeSelect.addEventListener("change", () => {{
         localStorage.setItem("claude-zh-cn-theme", themeSelect.value || "");
         applyTheme();
-      });
+      }});
       // Restore current selection
       const saved = localStorage.getItem("claude-zh-cn-theme") || "";
       themeSelect.value = saved;
       if (saved) applyTheme();
-    }
+    }}
     sync();
     updateLayout();
     return panel;

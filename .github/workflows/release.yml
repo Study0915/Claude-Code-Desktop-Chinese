@@ -1,0 +1,72 @@
+name: Release
+on:
+  push:
+    tags:
+      - 'v*'
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Get version from tag
+        id: version
+        shell: bash
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+      - name: Validate before release
+        run: |
+          python tools/validate_resources.py
+          python tools/test_patch_behaviors.py
+      - name: Create release archive
+        shell: bash
+        run: |
+          # Create the release directory structure
+          RELEASE_DIR="claude-zh-cn-${{ steps.version.outputs.VERSION }}"
+          mkdir -p "$RELEASE_DIR"
+          # Copy project files (exclude .git, __pycache__, etc.)
+          cp claude-zh-cn.bat "$RELEASE_DIR/"
+          cp claude-zh-cn-tray.bat "$RELEASE_DIR/"
+          cp VERSION "$RELEASE_DIR/"
+          cp -r resources "$RELEASE_DIR/"
+          cp -r scripts "$RELEASE_DIR/"
+          cp -r tools "$RELEASE_DIR/"
+          cp -r tray "$RELEASE_DIR/"
+          cp -r docs "$RELEASE_DIR/"
+          cp -r python "$RELEASE_DIR/"
+          cp README.md "$RELEASE_DIR/"
+          # Remove unnecessary files
+          find "$RELEASE_DIR" -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+          find "$RELEASE_DIR" -name "*.pyc" -delete 2>/dev/null || true
+          # Create zip
+          7z a "claude-zh-cn-v${{ steps.version.outputs.VERSION }}.zip" "$RELEASE_DIR/"
+      - name: Generate release notes
+        id: notes
+        shell: bash
+        run: |
+          # Extract the latest changelog entry
+          NOTES=$(sed -n '/^## [0-9]/,/^## [0-9]/{/^## [0-9]/{p;q};p}' docs/CHANGELOG.md)
+          echo "NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "$NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Claude Desktop 中文补丁 v${{ steps.version.outputs.VERSION }}"
+          body: |
+            ## Claude Desktop 中文补丁 v${{ steps.version.outputs.VERSION }}
+            ${{ steps.notes.outputs.NOTES }}
+            ### 安装方法
+            1. 下载 `claude-zh-cn-v${{ steps.version.outputs.VERSION }}.zip`
+            2. 解压后右键 `claude-zh-cn.bat` → 以管理员身份运行
+            3. 选择 `[1] 安装中文补丁`
+            ### 系统托盘
+            双击 `claude-zh-cn-tray.bat` 启动托盘监视器，自动检测 Claude 更新。
+          files: |
+            claude-zh-cn-v${{ steps.version.outputs.VERSION }}.zip
+          draft: false
+          prerelease: false

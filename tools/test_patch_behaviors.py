@@ -25,7 +25,7 @@ def load_module(name: str, path: Path):
 
 
 def test_font_runtime_replaces_legacy_injection() -> None:
-    patch_chunks = load_module("patch_chunks_zh_cn", ROOT / "patch_chunks_zh_cn.py")
+    patch_chunks = load_module("patch_chunks_zh_cn", ROOT / "scripts" / "patch_chunks_zh_cn.py")
 
     with tempfile.TemporaryDirectory() as tmp:
         assets = Path(tmp)
@@ -61,7 +61,7 @@ def test_font_runtime_replaces_legacy_injection() -> None:
 
 
 def test_font_runtime_updates_marked_injection() -> None:
-    patch_chunks = load_module("patch_chunks_zh_cn", ROOT / "patch_chunks_zh_cn.py")
+    patch_chunks = load_module("patch_chunks_zh_cn", ROOT / "scripts" / "patch_chunks_zh_cn.py")
 
     with tempfile.TemporaryDirectory() as tmp:
         assets = Path(tmp)
@@ -137,7 +137,7 @@ def test_desktop_menu_translations() -> None:
 
 
 def test_powershell_has_manual_app_dir_fallback() -> None:
-    content = (ROOT / "claude-zh-cn.ps1").read_text(encoding="utf-8-sig")
+    content = (ROOT / "scripts" / "claude-zh-cn.ps1").read_text(encoding="utf-8-sig")
     assert "function Resolve-ClaudeAppPath" in content
     assert "function Resolve-ClaudePackage" in content
     assert "function Set-ClaudePackageManual" in content
@@ -147,8 +147,8 @@ def test_powershell_has_manual_app_dir_fallback() -> None:
 
 
 def test_noninteractive_scripts_support_app_dir() -> None:
-    install = (ROOT / "install-windowsapps-json-only.ps1").read_text(encoding="utf-8-sig")
-    restore = (ROOT / "restore-windowsapps-zh-cn.ps1").read_text(encoding="utf-8-sig")
+    install = (ROOT / "scripts" / "install-windowsapps-json-only.ps1").read_text(encoding="utf-8-sig")
+    restore = (ROOT / "scripts" / "restore-windowsapps-zh-cn.ps1").read_text(encoding="utf-8-sig")
     assert "param(" in install and "[string]$AppDir" in install
     assert "--app-dir \"$AppDir\"" in install
     assert "param(" in restore and "[string]$AppDir" in restore
@@ -169,7 +169,7 @@ def test_restore_removes_font_mirror_and_locale() -> None:
         old_appdata = os.environ.get("APPDATA")
         os.environ["APPDATA"] = str(appdata)
         try:
-            restore = load_module("restore_claude_zh_cn_windowsapps", ROOT / "restore_claude_zh_cn_windowsapps.py")
+            restore = load_module("restore_claude_zh_cn_windowsapps", ROOT / "scripts" / "restore_claude_zh_cn_windowsapps.py")
             changed = restore.remove_locale()
             data = json.loads(config_path.read_text(encoding="utf-8"))
         finally:
@@ -196,7 +196,7 @@ def test_restore_remove_locale_permission_error_is_retried() -> None:
         old_appdata = os.environ.get("APPDATA")
         os.environ["APPDATA"] = str(appdata)
         try:
-            restore = load_module("restore_claude_zh_cn_windowsapps_retry", ROOT / "restore_claude_zh_cn_windowsapps.py")
+            restore = load_module("restore_claude_zh_cn_windowsapps_retry", ROOT / "scripts" / "restore_claude_zh_cn_windowsapps.py")
             original_write_text = Path.write_text
             write_calls = {"count": 0}
 
@@ -244,7 +244,7 @@ def test_json_patch_copies_resources_and_patches_locale_whitelist() -> None:
         os.environ["LOCALAPPDATA"] = str(localappdata)
         os.environ["APPDATA"] = str(appdata)
         try:
-            patch_json = load_module("patch_windowsapps_json_only", ROOT / "patch_windowsapps_json_only.py")
+            patch_json = load_module("patch_windowsapps_json_only", ROOT / "scripts" / "patch_windowsapps_json_only.py")
             old_argv = os.sys.argv[:]
             os.sys.argv = ["patch_windowsapps_json_only.py", "--app-dir", str(app_dir)]
             try:
@@ -292,7 +292,7 @@ def test_json_patch_whitelist_write_permission_error_is_retried() -> None:
         os.environ["LOCALAPPDATA"] = str(localappdata)
         os.environ["APPDATA"] = str(appdata)
         try:
-            patch_json = load_module("patch_windowsapps_json_only_retry", ROOT / "patch_windowsapps_json_only.py")
+            patch_json = load_module("patch_windowsapps_json_only_retry", ROOT / "scripts" / "patch_windowsapps_json_only.py")
             old_argv = os.sys.argv[:]
             os.sys.argv = ["patch_windowsapps_json_only.py", "--app-dir", str(app_dir)]
             write_calls = {"count": 0}
@@ -350,7 +350,7 @@ def test_json_patch_resource_copy_permission_error_is_retried() -> None:
         os.environ["LOCALAPPDATA"] = str(localappdata)
         os.environ["APPDATA"] = str(appdata)
         try:
-            patch_json = load_module("patch_windowsapps_json_only_copy_retry", ROOT / "patch_windowsapps_json_only.py")
+            patch_json = load_module("patch_windowsapps_json_only_copy_retry", ROOT / "scripts" / "patch_windowsapps_json_only.py")
             old_argv = os.sys.argv[:]
             os.sys.argv = ["patch_windowsapps_json_only.py", "--app-dir", str(app_dir)]
             original_copy2 = patch_json.shutil.copy2
@@ -407,7 +407,7 @@ def test_json_patch_backup_copy_permission_error_is_retried() -> None:
         os.environ["LOCALAPPDATA"] = str(localappdata)
         os.environ["APPDATA"] = str(appdata)
         try:
-            patch_json = load_module("patch_windowsapps_json_only_backup_retry", ROOT / "patch_windowsapps_json_only.py")
+            patch_json = load_module("patch_windowsapps_json_only_backup_retry", ROOT / "scripts" / "patch_windowsapps_json_only.py")
             old_argv = os.sys.argv[:]
             os.sys.argv = ["patch_windowsapps_json_only.py", "--app-dir", str(app_dir)]
             original_copy2 = patch_json.shutil.copy2
@@ -459,7 +459,7 @@ def test_chunk_patch_permission_error_is_retried() -> None:
         os.environ["LOCALAPPDATA"] = str(localappdata)
         os.environ["APPDATA"] = str(appdata)
         try:
-            patch_chunks = load_module("patch_chunks_zh_cn_retry", ROOT / "patch_chunks_zh_cn.py")
+            patch_chunks = load_module("patch_chunks_zh_cn_retry", ROOT / "scripts" / "patch_chunks_zh_cn.py")
             original_write_text = Path.write_text
             write_calls = {"index": 0, "config": 0}
 
@@ -495,7 +495,7 @@ def test_chunk_patch_permission_error_is_retried() -> None:
 
 
 def test_chunk_patch_backup_copy_permission_error_is_retried() -> None:
-    patch_chunks = load_module("patch_chunks_zh_cn_backup_retry", ROOT / "patch_chunks_zh_cn.py")
+    patch_chunks = load_module("patch_chunks_zh_cn_backup_retry", ROOT / "scripts" / "patch_chunks_zh_cn.py")
 
     with tempfile.TemporaryDirectory() as tmp:
         localappdata = Path(tmp) / "localappdata"
@@ -559,7 +559,7 @@ def test_restore_restores_json_and_chunk_backups() -> None:
         os.environ["LOCALAPPDATA"] = str(localappdata)
         os.environ["APPDATA"] = str(appdata)
         try:
-            restore = load_module("restore_for_restore_test", ROOT / "restore_claude_zh_cn_windowsapps.py")
+            restore = load_module("restore_for_restore_test", ROOT / "scripts" / "restore_claude_zh_cn_windowsapps.py")
             old_argv = os.sys.argv[:]
             os.sys.argv = ["restore_claude_zh_cn_windowsapps.py", "--app-dir", str(app_dir)]
             try:
@@ -605,7 +605,7 @@ def test_restore_copy_permission_error_is_retried() -> None:
         os.environ["LOCALAPPDATA"] = str(localappdata)
         os.environ["APPDATA"] = str(appdata)
         try:
-            restore = load_module("restore_claude_zh_cn_windowsapps_copy_retry", ROOT / "restore_claude_zh_cn_windowsapps.py")
+            restore = load_module("restore_claude_zh_cn_windowsapps_copy_retry", ROOT / "scripts" / "restore_claude_zh_cn_windowsapps.py")
             original_copy2 = restore.shutil.copy2
             copy_calls = {"count": 0}
 

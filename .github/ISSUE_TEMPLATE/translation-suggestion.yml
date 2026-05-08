@@ -1,0 +1,45 @@
+name: Translation Suggestion
+description: Suggest a translation improvement
+title: "[翻译] "
+labels: ["translation"]
+body:
+  - type: input
+    id: key
+    attributes:
+      label: Translation Key
+      description: The JSON key in the resource file
+      placeholder: e.g., +7sd9hoyZA
+    validations:
+      required: true
+  - type: dropdown
+    id: file
+    attributes:
+      label: Resource File
+      description: Which resource file contains this key
+      options:
+        - desktop.json
+        - frontend.json
+        - statsig.json
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current Translation
+      description: The current Chinese translation (if any)
+    validations:
+      required: false
+  - type: textarea
+    id: suggested
+    attributes:
+      label: Suggested Translation
+      description: Your suggested Chinese translation
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Where this string appears in the UI and any additional context
+    validations:
+      required: false
