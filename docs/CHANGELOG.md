@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-05-08
+
+### Added
+
+- 术语表从 37 条扩充至 100+ 条，覆盖产品、技术、通用 UI 词汇。
+- README 全面重构：增加徽章、特性列表、截图占位区、目录结构说明。
+- 项目图标生成脚本 `tools/generate_icon.py`，输出 `resources/icon-256.png` 和 `icon-64.png`。
+- `claude-zh-cn.bat` 支持 `/auto` 参数，实现一键静默安装。
+- PowerShell 安装脚本增加步骤提示、进度条、环境预检功能。
+
+### Changed
+
+- 优化 `frontend-zh-CN.json` 中 73 条疑似未翻译条目，统一品牌名与产品名翻译。
+- 扩展 `check_i18n_coverage.py` 白名单，减少品牌名/专有名词的误报。
+- 安装流程增加进度条和分步提示，提升小白用户体验。
+
+### Removed
+
+- 清理 `frontend-zh-CN.json` 中 298 条过时 key，缩减文件体积。
+
+### Coverage
+
+- desktop-zh-CN.json: 361/361 keys (100%)
+- frontend-zh-CN.json: 13227/13227 keys (100%，已清理过时键)
+- statsig-zh-CN.json: 46/46 keys (100%)
+- 疑似未翻译: 0 条
+
 ## Version Scheme
 
 Format: `{claude_version}.{patch_iteration}`

@@ -115,6 +115,22 @@ KNOWN_OK_PATTERNS = [
     re.compile(r"^\{label\}，Beta$"),
     # Local indicator
     re.compile(r"^（\{local\}）$"),
+    # Claude + 功能名产品组合
+    re.compile(r"^Claude (Ship|Slack|Cowork|Free|Platform|Artifacts|Code|Max|Pro|Team|Enterprise)$"),
+    # Research Labs 品牌名（含带冒号的变体）
+    re.compile(r"^Research Labs( Premium)?(：.+)?$"),
+    # 计划名称占位符
+    re.compile(r"^(Pro|Standard|Premium|Enterprise Claude|Custom).+"),
+    # 键盘快捷键
+    re.compile(r"^Ctrl\+.*$"),
+    # Anthropic 品牌字体
+    re.compile(r"^Anthropic Sans$"),
+    # Azure / Microsoft 品牌
+    re.compile(r"^(Azure AI Foundry|Microsoft Foundry)$"),
+    # Beta 标签
+    re.compile(r"^\{label\}，Beta$"),
+    # 单个大写字母缩写（2-8 字符）
+    re.compile(r"^[A-Z]{2,8}$"),
 ]
 
 

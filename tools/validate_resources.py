@@ -16,6 +16,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 RESOURCES = ROOT / "resources"
 
+GLOSSARY_PATH = RESOURCES / "glossary.json"
+
+
+def load_glossary() -> dict:
+    if GLOSSARY_PATH.exists():
+        return json.loads(GLOSSARY_PATH.read_text(encoding="utf-8"))
+    return {}
+
 TARGETS = [
     {
         "name": "desktop",
@@ -107,6 +115,41 @@ def check_curly_quotes(path: Path) -> list[str]:
     return issues
 
 
+def check_glossary_consistency(zh_data: dict, glossary: dict, name: str) -> list[str]:
+    """Check if zh-CN translations use glossary terms consistently."""
+    issues = []
+    if not glossary:
+        return issues
+
+    # 预编译所有正则表达式，提高性能
+    compiled_patterns = []
+    for term, info in glossary.items():
+        expected_zh = info.get("zh", "")
+        if not expected_zh or expected_zh == term:
+            continue
+        # 对于包含空格的术语，使用更宽松的匹配策略，不使用单词边界锚点
+        if " " in term:
+            pattern = re.compile(re.escape(term))
+        else:
+            pattern = re.compile(r'\b' + re.escape(term) + r'\b')
+        compiled_patterns.append((pattern, expected_zh, term))
+
+    # 批量处理所有术语匹配
+    for key, value in zh_data.items():
+        if not isinstance(value, str):
+            continue
+        if len(value) < 3 or value.startswith("{"):
+            continue
+
+        for pattern, expected_zh, term in compiled_patterns:
+            if pattern.search(value) and expected_zh not in value:
+                issues.append(
+                    f"  [{name}] Glossary mismatch: key={key}, "
+                    f"term='{term}' found but expected '{expected_zh}' not in value"
+                )
+    return issues
+
+
 def main() -> int:
     all_issues: list[str] = []
 
@@ -132,6 +175,14 @@ def main() -> int:
 
         all_issues.extend(check_empty_values(zh_data, name))
         all_issues.extend(check_curly_quotes(zh_path))
+
+        glossary = load_glossary()
+        glossary_issues = check_glossary_consistency(zh_data, glossary, name)
+        all_issues.extend(glossary_issues)
+        if glossary_issues:
+            print(f"  Glossary: {len(glossary_issues)} inconsistencies")
+        else:
+            print(f"  Glossary: OK")
 
         en_path = find_en_source(target["en_candidates"])
         if en_path:
