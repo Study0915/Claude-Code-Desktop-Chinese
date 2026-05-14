@@ -254,6 +254,30 @@ def main() -> int:
     # Step 3: Set locale
     locale_set = set_locale()
 
+    # Step 4: Record installation state for tray monitor
+    try:
+        config_base = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming"))
+        patch_config_path = config_base / "Claude-3p" / "zh-cn-patch.json"
+        patch_config_path.parent.mkdir(parents=True, exist_ok=True)
+        version = app_dir.parent.name.split("_")[1] if "_" in app_dir.parent.name else "unknown"
+        patch_ver = (ROOT / "VERSION").read_text(encoding="utf-8").strip() if (ROOT / "VERSION").exists() else "unknown"
+        patch_config = {
+            "installed": True,
+            "app_dir": str(app_dir),
+            "claude_version": version,
+            "patch_version": patch_ver,
+            "installed_at": __import__("time").time(),
+            "last_check": None,
+            "last_error": None,
+            "language": "zh-CN",
+            "auto_start": False,
+            "check_interval_minutes": 60,
+        }
+        patch_config_path.write_text(__import__("json").dumps(patch_config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"Tray config written: {patch_config_path}")
+    except Exception as e:
+        print(f"Warning: could not write tray config: {e}")
+
     print("Done")
     print(f"App dir: {app_dir}")
     print(f"Copied json resources: {copied}")

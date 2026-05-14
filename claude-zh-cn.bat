@@ -11,8 +11,10 @@ if %errorlevel% neq 0 (
 
 cd /d "%~dp0"
 
-if "%~1"=="/auto" (
+if /I "%~1"=="/auto" (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\claude-zh-cn.ps1" -Auto
+) else if /I "%~1"=="/uninstall" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\claude-zh-cn.ps1" -Uninstall
 ) else (
     powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0scripts\claude-zh-cn.ps1"
 )

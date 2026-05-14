@@ -6,21 +6,24 @@ in %APPDATA%\\Claude-3p\\zh-cn-patch.json.
 from __future__ import annotations
 
 import json
+import os
 import time
 from pathlib import Path
 from typing import Any
 
-CONFIG_DIR = Path.home() / "AppData" / "Roaming" / "Claude-3p"
+CONFIG_DIR = Path(os.environ.get("APPDATA", Path.home() / "AppData" / "Roaming")) / "Claude-3p"
 PATCH_CONFIG_PATH = CONFIG_DIR / "zh-cn-patch.json"
 
 
 def _default_config() -> dict[str, Any]:
     return {
         "installed": False,
+        "app_dir": None,
         "claude_version": None,
         "patch_version": None,
         "installed_at": None,
         "last_check": None,
+        "last_error": None,
         "language": "zh-CN",
         "auto_start": False,
         "check_interval_minutes": 60,
@@ -54,13 +57,27 @@ def save_config(config: dict[str, Any]) -> bool:
         return False
 
 
-def update_install_state(claude_version: str, patch_version: str) -> None:
+def update_install_state(
+    claude_version: str,
+    patch_version: str,
+    app_dir: str | Path | None = None,
+) -> None:
     """Record a successful installation."""
     config = load_config()
     config["installed"] = True
+    if app_dir is not None:
+        config["app_dir"] = str(app_dir)
     config["claude_version"] = claude_version
     config["patch_version"] = patch_version
     config["installed_at"] = time.time()
+    config["last_error"] = None
+    save_config(config)
+
+
+def update_last_error(message: str | None) -> None:
+    """Record the last tray/install error for diagnostics."""
+    config = load_config()
+    config["last_error"] = message
     save_config(config)
 
 

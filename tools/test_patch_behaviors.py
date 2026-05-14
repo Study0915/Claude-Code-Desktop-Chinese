@@ -5,14 +5,16 @@ from __future__ import annotations
 import importlib.util
 import json
 import os
+import sys
 import tempfile
 from unittest import mock
 from pathlib import Path
 
-import best_effort_io
-
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import best_effort_io
 
 
 def load_module(name: str, path: Path):
@@ -29,6 +31,7 @@ def test_font_runtime_replaces_legacy_injection() -> None:
 
     with tempfile.TemporaryDirectory() as tmp:
         assets = Path(tmp)
+        patch_chunks.BACKUP_ROOT = assets / "backup"
         index = assets / "index-test.js"
         index.write_text(
             "console.log('app');\n"
@@ -65,6 +68,7 @@ def test_font_runtime_updates_marked_injection() -> None:
 
     with tempfile.TemporaryDirectory() as tmp:
         assets = Path(tmp)
+        patch_chunks.BACKUP_ROOT = assets / "backup"
         index = assets / "index-test.js"
         index.write_text(
             "console.log('app');\n"
@@ -144,6 +148,17 @@ def test_powershell_has_manual_app_dir_fallback() -> None:
     assert "请输入 Claude app 目录" in content
     assert "manual:" in content
     assert "[3] 手动指定 Claude app 目录" in content
+    assert "[switch]$Uninstall" in content
+    assert "Invoke-Uninstall" in content
+
+
+def test_batch_scripts_expose_tray_and_uninstall_helpers() -> None:
+    main_bat = (ROOT / "claude-zh-cn.bat").read_text(encoding="utf-8-sig")
+    tray_bat = (ROOT / "claude-zh-cn-tray.bat").read_text(encoding="utf-8-sig")
+    assert "/uninstall" in main_bat
+    assert "-Uninstall" in main_bat
+    assert "pystray" in tray_bat and "PIL" in tray_bat
+    assert "pythonw.exe" in tray_bat
 
 
 def test_noninteractive_scripts_support_app_dir() -> None:
@@ -641,6 +656,7 @@ def main() -> int:
         test_brand_and_model_names_stay_in_english,
         test_desktop_menu_translations,
         test_powershell_has_manual_app_dir_fallback,
+        test_batch_scripts_expose_tray_and_uninstall_helpers,
         test_noninteractive_scripts_support_app_dir,
         test_restore_removes_font_mirror_and_locale,
         test_json_patch_copies_resources_and_patches_locale_whitelist,

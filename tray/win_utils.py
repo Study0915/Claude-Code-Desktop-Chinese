@@ -2,11 +2,78 @@
 from __future__ import annotations
 
 import ctypes
+import os
 import subprocess
 from pathlib import Path
 from typing import Optional
 
 WINDOWSAPPS_BASE = Path(r"C:\Program Files\WindowsApps")
+
+
+def is_patch_installed(app_dir: Optional[Path] = None) -> bool:
+    """Detect whether the zh-CN patch is actually present in Claude app directory.
+
+    Checks for the existence of zh-CN.json resource files.
+    """
+    if app_dir is None:
+        app_dir = find_claude_package()
+    if app_dir is None:
+        return False
+    res = app_dir / "resources"
+    zh_desktop = res / "zh-CN.json"
+    zh_frontend = res / "ion-dist" / "i18n" / "zh-CN.json"
+    zh_statsig = res / "ion-dist" / "i18n" / "statsig" / "zh-CN.json"
+    return zh_desktop.exists() and zh_frontend.exists() and zh_statsig.exists()
+
+
+def get_patch_components(app_dir: Optional[Path] = None) -> dict[str, bool]:
+    """Return detailed patch component status for diagnostics."""
+    if app_dir is None:
+        app_dir = find_claude_package()
+    if app_dir is None:
+        return {
+            "app_found": False,
+            "desktop_json": False,
+            "frontend_json": False,
+            "statsig_json": False,
+            "whitelist": False,
+            "locale": False,
+        }
+
+    res = app_dir / "resources"
+    desktop_json = res / "zh-CN.json"
+    frontend_json = res / "ion-dist" / "i18n" / "zh-CN.json"
+    statsig_json = res / "ion-dist" / "i18n" / "statsig" / "zh-CN.json"
+    assets_dir = res / "ion-dist" / "assets" / "v1"
+    whitelist = False
+    for path in (assets_dir.glob("index-*.js") if assets_dir.exists() else []):
+        try:
+            if '"zh-CN"' in path.read_text(encoding="utf-8", errors="ignore"):
+                whitelist = True
+                break
+        except OSError:
+            continue
+
+    locale = False
+    appdata = os.environ.get("APPDATA")
+    config_base = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
+    config_path = config_base / "Claude-3p" / "config.json"
+    if config_path.exists():
+        try:
+            import json
+
+            locale = json.loads(config_path.read_text(encoding="utf-8")).get("locale") == "zh-CN"
+        except (json.JSONDecodeError, OSError):
+            locale = False
+
+    return {
+        "app_found": True,
+        "desktop_json": desktop_json.exists(),
+        "frontend_json": frontend_json.exists(),
+        "statsig_json": statsig_json.exists(),
+        "whitelist": whitelist,
+        "locale": locale,
+    }
 
 
 def is_admin() -> bool:
@@ -31,6 +98,53 @@ def find_claude_package() -> Optional[Path]:
     if candidates:
         return candidates[0].parent.parent  # .../app
     return None
+
+
+def find_claude_executable(app_dir: Optional[Path] = None) -> Optional[Path]:
+    """Find a launchable Claude executable near the app directory."""
+    if app_dir is None:
+        app_dir = find_claude_package()
+    if app_dir is None:
+        return None
+
+    candidates = [
+        app_dir / "Claude.exe",
+        app_dir / "claude.exe",
+        app_dir.parent / "Claude.exe",
+        app_dir.parent / "claude.exe",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+
+    try:
+        found = sorted(app_dir.glob("*.exe"))
+    except OSError:
+        found = []
+    return found[0] if found else None
+
+
+def open_path(path: Path) -> bool:
+    """Open a file or folder in Explorer."""
+    try:
+        os.startfile(str(path))
+        return True
+    except OSError as e:
+        print(f"Failed to open {path}: {e}")
+        return False
+
+
+def launch_claude(app_dir: Optional[Path] = None) -> bool:
+    """Launch Claude Desktop from the detected package."""
+    exe = find_claude_executable(app_dir)
+    if exe is None:
+        return False
+    try:
+        subprocess.Popen([str(exe)], cwd=str(exe.parent))
+        return True
+    except OSError as e:
+        print(f"Failed to launch Claude: {e}")
+        return False
 
 
 def get_claude_version(app_dir: Optional[Path] = None) -> Optional[str]:
@@ -79,12 +193,16 @@ def show_toast(title: str, message: str, duration: int = 5) -> bool:
     [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Claude zh-CN").Show($toast)
     """
     try:
-        subprocess.run(
+        result = subprocess.run(
             ["powershell", "-NoProfile", "-Command", ps_script],
             capture_output=True,
             timeout=10,
             creationflags=subprocess.CREATE_NO_WINDOW if hasattr(subprocess, 'CREATE_NO_WINDOW') else 0,
         )
+        if result.returncode != 0:
+            print(f"Toast failed (exit {result.returncode}), falling back to print")
+            print(f"  {title}: {message}")
+            return False
         return True
     except (subprocess.TimeoutExpired, OSError) as e:
         print(f"Toast failed ({e}), falling back to print")
@@ -95,10 +213,12 @@ def show_toast(title: str, message: str, duration: int = 5) -> bool:
 def register_startup(task_name: str = "ClaudeZhCnTray") -> bool:
     """Register the tray app to start on login via Windows Task Scheduler."""
     script_dir = Path(__file__).resolve().parent.parent
-    python_exe = script_dir / "python" / "python.exe"
+    python_exe = script_dir / "python" / "pythonw.exe"
     tray_script = script_dir / "tray" / "app.py"
     if not python_exe.exists():
-        python_exe = Path("python")
+        python_exe = script_dir / "python" / "python.exe"
+    if not python_exe.exists():
+        python_exe = Path("pythonw")
     if not tray_script.exists():
         print(f"Error: tray script not found: {tray_script}")
         return False

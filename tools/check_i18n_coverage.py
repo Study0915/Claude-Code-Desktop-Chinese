@@ -81,9 +81,20 @@ KNOWN_OK_PATTERNS = [
     # Names with email placeholders
     re.compile(r"^\{name\}.*\{email\}$"),
     re.compile(r"^\{fullName\}.*\{email\}$"),
+    re.compile(r"^\{name\}（\{email\}）$"),
+    re.compile(r"^\{fullName\}（\{email\}）$"),
     # Other format strings with parentheses
     re.compile(r"^（.*\{.*\}.*）$"),
     re.compile(r"^\（.*\）$"),
+    re.compile(r"^\(\{change, number, ::sign-always\}\)$"),
+    re.compile(r"^v\{version\}$"),
+    re.compile(r"^\$\{cost\}$"),
+    re.compile(r"^#\{rank\}$"),
+    re.compile(r"^- \{amount\}$"),
+    re.compile(r"^\{name\}[,，]$"),
+    re.compile(r"^\{n\}（\{pct\}%）$"),
+    re.compile(r"^\{organizationName\}（\{organizationUuid\}）$"),
+    re.compile(r"^SSH · \{sshHost\}$"),
     # Short labels with symbols
     re.compile(r"^[A-Z][a-z]+ [A-Z][a-z]+$"),
     # HTTP status
@@ -125,6 +136,8 @@ KNOWN_OK_PATTERNS = [
     re.compile(r"^Ctrl\+.*$"),
     # Anthropic 品牌字体
     re.compile(r"^Anthropic Sans$"),
+    # 模型名称
+    re.compile(r"^(Sonnet|Opus|Haiku)$"),
     # Azure / Microsoft 品牌
     re.compile(r"^(Azure AI Foundry|Microsoft Foundry)$"),
     # Beta 标签
@@ -178,6 +191,8 @@ def check_glossary_consistency(data: dict, glossary: dict, name: str) -> list[st
                 continue
             if term in value and expected_zh not in value:
                 pattern = r'\b' + re.escape(term) + r'\b'
+                if is_inside_preserved_longer_term(value, term, glossary):
+                    continue
                 if re.search(pattern, value):
                     issues.append(
                         f"  [{name}] Glossary mismatch: key={key}, "
@@ -186,12 +201,22 @@ def check_glossary_consistency(data: dict, glossary: dict, name: str) -> list[st
     return issues
 
 
+def is_inside_preserved_longer_term(value: str, term: str, glossary: dict) -> bool:
+    """Skip generic-term checks inside preserved brand phrases."""
+    for long_term, info in glossary.items():
+        if long_term == term or term not in long_term:
+            continue
+        if info.get("zh") == long_term and re.search(re.escape(long_term), value):
+            return True
+    return False
+
+
 def main() -> int:
     report_lines: list[str] = []
     total_missing = 0
     total_suspect = 0
     glossary_issues_total = 0
-    all_issues: list[str] = []
+    all_glossary_issues: list[str] = []
 
     for target in TARGETS:
         name = target["name"]
@@ -205,14 +230,6 @@ def main() -> int:
             continue
 
         zh_data = load_json(zh_path)
-        glossary = load_glossary()
-        glossary_issues = check_glossary_consistency(zh_data, glossary, name)
-        all_issues.extend(glossary_issues)
-        if glossary_issues:
-            print(f"  Glossary: {len(glossary_issues)} inconsistencies")
-        else:
-            print(f"  Glossary: OK")
-        glossary_issues_total += len(glossary_issues)
         report_lines.append(f"zh-CN keys: {len(zh_data)}")
 
         # Mode 1: en-US comparison
@@ -260,6 +277,18 @@ def main() -> int:
             report_lines.append("### Suspect untranslated: 0")
         total_suspect += len(issues)
 
+        # Mode 3: Glossary consistency check
+        glossary = load_glossary()
+        glossary_issues = check_glossary_consistency(zh_data, glossary, name)
+        all_glossary_issues.extend(glossary_issues)
+        if glossary_issues:
+            report_lines.append(f"### Glossary inconsistencies ({len(glossary_issues)})")
+            for issue in glossary_issues:
+                report_lines.append(issue)
+        else:
+            report_lines.append("### Glossary inconsistencies: 0")
+        glossary_issues_total += len(glossary_issues)
+
         report_lines.append("")
 
     report_lines.append("---")
@@ -269,14 +298,15 @@ def main() -> int:
 
     report = "\n".join(report_lines)
     out = ROOT / "I18N-COVERAGE-REPORT.md"
-    out.write_text(report, encoding="utf-8")
+    out.write_text(report + "\n", encoding="utf-8")
 
     print(f"Wrote: {out}")
     print(f"Missing keys (en-US not in zh-CN): {total_missing}")
     print(f"Suspect untranslated values: {total_suspect}")
     print(f"Total glossary inconsistencies: {glossary_issues_total}")
 
-    return 1 if total_missing > 0 else 0
+    has_issues = total_missing > 0 or glossary_issues_total > 0
+    return 1 if has_issues else 0
 
 
 if __name__ == "__main__":

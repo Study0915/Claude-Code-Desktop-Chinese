@@ -48,9 +48,10 @@ TARGETS = [
     },
 ]
 
-# Match top-level placeholders only (not nested ones inside plural/select forms)
-# This extracts variable names like {name}, {count}, {date} but not inner content
-PLACEHOLDER_RE = re.compile(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}")
+# Match simple placeholders and top-level ICU variables. Inner ICU option labels
+# are user-visible copy and may be translated, so they are not placeholders.
+SIMPLE_PLACEHOLDER_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+ICU_TOP_LEVEL_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*,\s*(plural|select|selectordinal)\b")
 # Match ICU plural/select patterns to verify structural consistency
 ICU_PATTERN_RE = re.compile(r"\{(\w+),\s*(plural|select)\b")
 
@@ -84,8 +85,8 @@ def check_placeholders(zh_data: dict, en_data: dict, name: str) -> list[str]:
         if not isinstance(zh_val, str) or not isinstance(en_val, str):
             continue
         # Compare top-level placeholder variable names only
-        zh_ph = sorted(PLACEHOLDER_RE.findall(zh_val))
-        en_ph = sorted(PLACEHOLDER_RE.findall(en_val))
+        zh_ph = extract_placeholders(zh_val)
+        en_ph = extract_placeholders(en_val)
         if zh_ph != en_ph:
             issues.append(f"  [{name}] Placeholder mismatch: {key}")
             issues.append(f"    en: {en_ph}")
@@ -98,6 +99,39 @@ def check_placeholders(zh_data: dict, en_data: dict, name: str) -> list[str]:
             issues.append(f"    en: {en_icu}")
             issues.append(f"    zh: {zh_icu}")
     return issues
+
+
+def extract_placeholders(value: str) -> list[str]:
+    """Extract actual placeholder variable names from ICU/message strings."""
+    placeholders: list[str] = []
+    index = 0
+    while index < len(value):
+        if value[index] != "{":
+            index += 1
+            continue
+
+        depth = 0
+        end = None
+        for pos in range(index, len(value)):
+            if value[pos] == "{":
+                depth += 1
+            elif value[pos] == "}":
+                depth -= 1
+                if depth == 0:
+                    end = pos
+                    break
+        if end is None:
+            break
+
+        content = value[index + 1:end].strip()
+        icu_match = ICU_TOP_LEVEL_RE.match(content)
+        if icu_match:
+            placeholders.append(icu_match.group(1))
+        elif SIMPLE_PLACEHOLDER_RE.match(content):
+            placeholders.append(content)
+        index = end + 1
+
+    return sorted(placeholders)
 
 
 def check_curly_quotes(path: Path) -> list[str]:
@@ -142,12 +176,24 @@ def check_glossary_consistency(zh_data: dict, glossary: dict, name: str) -> list
             continue
 
         for pattern, expected_zh, term in compiled_patterns:
+            if is_inside_preserved_longer_term(value, term, glossary):
+                continue
             if pattern.search(value) and expected_zh not in value:
                 issues.append(
                     f"  [{name}] Glossary mismatch: key={key}, "
                     f"term='{term}' found but expected '{expected_zh}' not in value"
                 )
     return issues
+
+
+def is_inside_preserved_longer_term(value: str, term: str, glossary: dict) -> bool:
+    """Skip generic-term checks inside preserved brand phrases."""
+    for long_term, info in glossary.items():
+        if long_term == term or term not in long_term:
+            continue
+        if info.get("zh") == long_term and re.search(re.escape(long_term), value):
+            return True
+    return False
 
 
 def main() -> int:

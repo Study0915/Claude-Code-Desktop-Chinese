@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.5354.0.1 — 2026-05-09
+
+### Added
+
+- Translation glossary (`resources/glossary.json`) with 60+ standardized terms across product, technical, Git, cloud, and compliance categories.
+- i18n coverage and consistency checker (`tools/check_i18n_coverage.py`) with glossary validation and extended `KNOWN_OK_PATTERNS` whitelist.
+- Translation suggestion tool (`tools/suggest_translations.py`) for semi-automated drafting of new translations using glossary substitutions.
+- Tray monitor diagnostics: clearer dependency checks, component-level status, quick links to Claude/config directories, and UAC handoff for install/uninstall.
+
+### Infrastructure
+
+- Added `docs/CHANGELOG.md` version scheme documentation.
+- Added `VERSION` file for patch version tracking.
+
+---
+
 ## 2026-05-08
 
 ### Added

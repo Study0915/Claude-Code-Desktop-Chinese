@@ -8,7 +8,8 @@
 #>
 
 param(
-  [switch]$Auto
+  [switch]$Auto,
+  [switch]$Uninstall
 )
 
 $ErrorActionPreference = 'Stop'
@@ -304,6 +305,12 @@ function Invoke-Install {
   Write-Step 3 $totalSteps '正在执行 chunk 界面标签和字体自定义 patch...'
   Write-Host ""
   & $python.Source "$scriptDir\patch_chunks_zh_cn.py" --app-dir "$appDir"
+
+  if ($LASTEXITCODE -ne 0) {
+    Write-Host ""
+    Write-Err 'chunk 界面标签和字体 patch 失败。请检查上面的错误信息。'
+    return
+  }
   Write-ProgressBar -Percent 90 -Label '界面标签已汉化'
 
   Write-Step 4 $totalSteps '正在验证安装结果...'
@@ -433,6 +440,17 @@ function Show-Menu {
 }
 
 # ── 自动模式 ──────────────────────────────────────────────
+if ($Uninstall) {
+  Write-Host ""
+  Write-Info '自动卸载模式：检测到管理员权限，正在恢复英文界面...'
+  Write-Host ""
+  Invoke-Uninstall
+  Write-Host ""
+  Write-Info '3 秒后自动退出...'
+  Start-Sleep -Seconds 3
+  exit 0
+}
+
 if ($Auto) {
   Write-Host ""
   Write-Info '自动模式：检测到管理员权限，正在执行一键安装...'
